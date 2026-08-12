@@ -13,26 +13,26 @@ class MockDatabase {
 
   final User currentUser = User(
     id: 'user_1',
-    username: 'demo_user',
-    email: 'demo@app.com',
-    avatarUrl: 'https://i.pravatar.cc/150?u=user_1',
-    bio: 'Just a mock user in a static world.',
-    followersCount: 120,
-    followingCount: 45,
+    username: 'akshat_mfc',
+    email: 'akshat@app.com',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Akshat+Dwivedi&background=random',
+    bio: 'Akshat Dwivedi',
+    followersCount: 40,
+    followingCount: 41,
     createdAt: DateTime.now().subtract(const Duration(days: 30)),
   );
 
   final List<User> otherUsers = [
-    User(id: 'user_2', username: 'alice_smith', email: 'alice@app.com', avatarUrl: 'https://i.pravatar.cc/150?u=user_2', createdAt: DateTime.now()),
-    User(id: 'user_3', username: 'bob_jones', email: 'bob@app.com', avatarUrl: 'https://i.pravatar.cc/150?u=user_3', createdAt: DateTime.now()),
-    User(id: 'user_4', username: 'charlie_brown', email: 'charlie@app.com', avatarUrl: 'https://i.pravatar.cc/150?u=user_4', createdAt: DateTime.now()),
+    User(id: 'user_2', username: 'alice_smith', email: 'alice@app.com', avatarUrl: 'https://ui-avatars.com/api/?name=Alice+Smith&background=random', createdAt: DateTime.now()),
+    User(id: 'user_3', username: 'bob_jones', email: 'bob@app.com', avatarUrl: 'https://ui-avatars.com/api/?name=Bob+Jones&background=random', createdAt: DateTime.now()),
+    User(id: 'user_4', username: 'charlie_brown', email: 'charlie@app.com', avatarUrl: 'https://ui-avatars.com/api/?name=Charlie+Brown&background=random', createdAt: DateTime.now()),
   ];
 
   late final List<Post> posts = [
     Post(
       id: 'post_1',
-      userId: 'user_2',
-      imageUrl: 'https://picsum.photos/seed/post1/600/600',
+      userId: 'user_1',
+      imageUrl: 'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl.jpg',
       caption: 'Loving this new static app design! 🚀',
       likesCount: 42,
       commentsCount: 2,
@@ -40,8 +40,8 @@ class MockDatabase {
     ),
     Post(
       id: 'post_2',
-      userId: 'user_3',
-      imageUrl: 'https://picsum.photos/seed/post2/600/600',
+      userId: 'user_1',
+      imageUrl: 'https://flutter.github.io/assets-for-api-docs/assets/widgets/owl-2.jpg',
       caption: 'Coffee time ☕️',
       likesCount: 15,
       commentsCount: 0,
@@ -50,7 +50,7 @@ class MockDatabase {
     Post(
       id: 'post_3',
       userId: 'user_4',
-      imageUrl: 'https://picsum.photos/seed/post3/600/600',
+      imageUrl: 'https://docs.flutter.dev/assets/images/dash/dash-fainting.gif',
       caption: 'What a beautiful sunset...',
       likesCount: 120,
       commentsCount: 5,
