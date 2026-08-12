@@ -1,4 +1,5 @@
 import '../core/base/base_model.dart';
+import 'user.dart';
 
 /// Immutable post model.
 ///
@@ -11,6 +12,7 @@ class Post extends BaseModel {
   final int _likesCount;
   final int _commentsCount;
   final DateTime _createdAt;
+  final User? _author;
 
   // ── Named constructor ───────────────────────────────────────────────────
 
@@ -22,13 +24,15 @@ class Post extends BaseModel {
     int likesCount = 0,
     int commentsCount = 0,
     required DateTime createdAt,
+    User? author,
   })  : _id = id,
         _userId = userId,
         _imageUrl = imageUrl,
         _caption = caption,
         _likesCount = likesCount,
         _commentsCount = commentsCount,
-        _createdAt = createdAt;
+        _createdAt = createdAt,
+        _author = author;
 
   // ── Factory from JSON ───────────────────────────────────────────────────
 
@@ -41,6 +45,7 @@ class Post extends BaseModel {
       likesCount: json['likes_count'] as int? ?? 0,
       commentsCount: json['comments_count'] as int? ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
+      author: json['profiles'] != null ? User.fromJson(json['profiles']) : null,
     );
   }
 
@@ -54,6 +59,7 @@ class Post extends BaseModel {
   int get likesCount => _likesCount;
   int get commentsCount => _commentsCount;
   DateTime get createdAt => _createdAt;
+  User? get author => _author;
 
   // ── Serialisation ───────────────────────────────────────────────────────
 
@@ -67,6 +73,7 @@ class Post extends BaseModel {
       'likes_count': _likesCount,
       'comments_count': _commentsCount,
       'created_at': _createdAt.toIso8601String(),
+      'profiles': _author?.toJson(),
     };
   }
 
@@ -77,6 +84,7 @@ class Post extends BaseModel {
     String? caption,
     int? likesCount,
     int? commentsCount,
+    User? author,
   }) {
     return Post(
       id: _id,
@@ -86,6 +94,7 @@ class Post extends BaseModel {
       likesCount: likesCount ?? _likesCount,
       commentsCount: commentsCount ?? _commentsCount,
       createdAt: _createdAt,
+      author: author ?? _author,
     );
   }
 }

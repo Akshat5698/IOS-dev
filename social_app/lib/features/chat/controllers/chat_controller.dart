@@ -1,7 +1,12 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../models/message.dart';
-import '../../../services/chat_service.dart';
+import '../../../models/conversation.dart';
+import '../../../core/providers/supabase_providers.dart';
+import '../../../services/supabase_chat_service.dart';
+import '../../auth/controllers/auth_controller.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────
 
@@ -9,22 +14,26 @@ class ChatState {
   final bool isLoading;
   final List<Message> messages;
   final String? errorMessage;
+  final String? conversationId;
 
   const ChatState({
     this.isLoading = false,
     this.messages = const [],
     this.errorMessage,
+    this.conversationId,
   });
 
   ChatState copyWith({
     bool? isLoading,
     List<Message>? messages,
     String? errorMessage,
+    String? conversationId,
   }) {
     return ChatState(
       isLoading: isLoading ?? this.isLoading,
       messages: messages ?? this.messages,
       errorMessage: errorMessage,
+      conversationId: conversationId ?? this.conversationId,
     );
   }
 }
@@ -32,11 +41,18 @@ class ChatState {
 // ── Controller ────────────────────────────────────────────────────────────
 
 class ChatController extends StateNotifier<ChatState> {
-  final ChatService _chatService;
+  final SupabaseChatService _chatService;
+  RealtimeChannel? _subscription;
 
-  ChatController({ChatService? chatService})
-      : _chatService = chatService ?? ChatService(),
+  ChatController({required SupabaseChatService chatService})
+      : _chatService = chatService,
         super(const ChatState());
+
+  @override
+  void dispose() {
+    _subscription?.unsubscribe();
+    super.dispose();
+  }
 
   /// Load a conversation between two users.
   Future<void> loadConversation(
@@ -49,10 +65,37 @@ class ChatController extends StateNotifier<ChatState> {
         currentUserId,
         otherUserId,
       );
-      state = state.copyWith(isLoading: false, messages: messages);
+      
+      String? convId;
+      if (messages.isNotEmpty) {
+        convId = messages.first.conversationId;
+      }
+      
+      if (mounted) {
+        state = state.copyWith(isLoading: false, messages: messages, conversationId: convId);
+      }
+      
+      // Subscribe to real-time changes
+      if (convId != null) {
+        _subscribeToConversation(convId);
+      }
+      
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
     }
+  }
+
+  void _subscribeToConversation(String conversationId) {
+    _subscription?.unsubscribe();
+    _subscription = _chatService.subscribeToConversation(conversationId, (newMessage) {
+      if (!mounted) return;
+      // Prevent duplicate messages (since sendMessage adds it optimistically)
+      if (!state.messages.any((m) => m.id == newMessage.id)) {
+        state = state.copyWith(messages: [...state.messages, newMessage]);
+      }
+    });
   }
 
   /// Send a message and append it to the conversation.
@@ -67,18 +110,34 @@ class ChatController extends StateNotifier<ChatState> {
         receiverId: receiverId,
         content: content,
       );
-      state = state.copyWith(messages: [...state.messages, message]);
+      
+      if (mounted) {
+        state = state.copyWith(messages: [...state.messages, message]);
+        if (state.conversationId == null) {
+          state = state.copyWith(conversationId: message.conversationId);
+          _subscribeToConversation(message.conversationId);
+        }
+      }
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(errorMessage: e.toString());
+      }
     }
   }
 }
 
 // ── Providers ─────────────────────────────────────────────────────────────
 
-final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
+final chatListProvider = FutureProvider.autoDispose<List<Conversation>>((ref) async {
+  final chatService = ref.watch(supabaseChatServiceProvider);
+  final currentUser = ref.watch(authControllerProvider).user;
+  
+  if (currentUser == null) return [];
+  
+  return chatService.fetchConversations(currentUser.id);
+});
 
 final chatControllerProvider =
     StateNotifierProvider<ChatController, ChatState>((ref) {
-  return ChatController(chatService: ref.watch(chatServiceProvider));
+  return ChatController(chatService: ref.watch(supabaseChatServiceProvider));
 });

@@ -1,7 +1,9 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/providers/supabase_providers.dart';
+import '../../../services/supabase_feed_service.dart';
 import '../../../models/post.dart';
-import '../../../services/feed_service.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────
 
@@ -32,10 +34,10 @@ class FeedState {
 // ── Controller ────────────────────────────────────────────────────────────
 
 class FeedController extends StateNotifier<FeedState> {
-  final FeedService _feedService;
+  final SupabaseFeedService _feedService;
 
-  FeedController({FeedService? feedService})
-      : _feedService = feedService ?? FeedService(),
+  FeedController({required SupabaseFeedService feedService})
+      : _feedService = feedService,
         super(const FeedState());
 
   /// Load the feed (first page).
@@ -43,9 +45,13 @@ class FeedController extends StateNotifier<FeedState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final posts = await _feedService.fetchFeed();
-      state = state.copyWith(isLoading: false, posts: posts);
+      if (mounted) {
+        state = state.copyWith(isLoading: false, posts: posts);
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
     }
   }
 
@@ -55,27 +61,31 @@ class FeedController extends StateNotifier<FeedState> {
   /// Create a new post and prepend it to the feed.
   Future<void> createPost({
     required String userId,
-    required String imageUrl,
+    required Uint8List imageBytes,
+    required String fileExtension,
     String caption = '',
   }) async {
     try {
       final post = await _feedService.createPost(
         userId: userId,
-        imageUrl: imageUrl,
+        imageBytes: imageBytes,
+        fileExtension: fileExtension,
         caption: caption,
       );
-      state = state.copyWith(posts: [post, ...state.posts]);
+      if (mounted) {
+        state = state.copyWith(posts: [post, ...state.posts]);
+      }
     } catch (e) {
-      state = state.copyWith(errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(errorMessage: e.toString());
+      }
     }
   }
 }
 
 // ── Providers ─────────────────────────────────────────────────────────────
 
-final feedServiceProvider = Provider<FeedService>((ref) => FeedService());
-
 final feedControllerProvider =
     StateNotifierProvider<FeedController, FeedState>((ref) {
-  return FeedController(feedService: ref.watch(feedServiceProvider));
+  return FeedController(feedService: ref.watch(supabaseFeedServiceProvider));
 });

@@ -14,14 +14,12 @@ class SignUpScreen extends ConsumerStatefulWidget {
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
-  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailController.dispose();
-    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -32,7 +30,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     await ref.read(authControllerProvider.notifier).signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text,
-          username: _usernameController.text.trim(),
         );
   }
 
@@ -76,19 +73,14 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: 'Email'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Enter an email' : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // ── Username ──────────────────────────────────────────
-                  TextFormField(
-                    controller: _usernameController,
-                    textInputAction: TextInputAction.next,
-                    decoration: const InputDecoration(hintText: 'Username'),
-                    validator: (v) =>
-                        (v == null || v.trim().isEmpty) ? 'Enter a username' : null,
+                    decoration: const InputDecoration(hintText: 'Email (must be @gmail.com)'),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Enter an email';
+                      if (!v.trim().toLowerCase().endsWith('@gmail.com')) {
+                        return 'Signups are restricted to @gmail.com';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
 

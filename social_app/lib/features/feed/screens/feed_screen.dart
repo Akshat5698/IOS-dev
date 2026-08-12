@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/mock/mock_database.dart';
+import '../../../core/providers/supabase_providers.dart';
 import '../../../widgets/error_view.dart';
 import '../../../widgets/loading_indicator.dart';
 import '../../chat/screens/chat_list_screen.dart';
@@ -34,16 +35,12 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     setState(() {
       if (_likedPostIds.contains(post.id)) {
         _likedPostIds.remove(post.id);
-        ref.read(feedServiceProvider).toggleLike(post.id, true);
+        ref.read(supabaseFeedServiceProvider).toggleLike(post.id, true);
       } else {
         _likedPostIds.add(post.id);
-        ref.read(feedServiceProvider).toggleLike(post.id, false);
+        ref.read(supabaseFeedServiceProvider).toggleLike(post.id, false);
       }
     });
-  }
-
-  User? _getUser(String userId) {
-    return MockDatabase.instance.getUser(userId);
   }
 
   @override
@@ -206,7 +203,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
   }
 
   Widget _buildPost(Post post, ThemeData theme) {
-    final user = _getUser(post.userId);
+    final user = post.author;
     final isLiked = _likedPostIds.contains(post.id);
     final displayLikes = post.likesCount + (isLiked ? 1 : 0);
     

@@ -4,7 +4,7 @@ import '../core/base/base_model.dart';
 class Message extends BaseModel {
   final String _id;
   final String _senderId;
-  final String _receiverId;
+  final String _conversationId;
   final String _content;
   final bool _isRead;
   final DateTime _createdAt;
@@ -14,13 +14,13 @@ class Message extends BaseModel {
   Message({
     required String id,
     required String senderId,
-    required String receiverId,
+    required String conversationId,
     required String content,
     bool isRead = false,
     required DateTime createdAt,
   })  : _id = id,
         _senderId = senderId,
-        _receiverId = receiverId,
+        _conversationId = conversationId,
         _content = content,
         _isRead = isRead,
         _createdAt = createdAt;
@@ -31,7 +31,7 @@ class Message extends BaseModel {
     return Message(
       id: json['id'] as String,
       senderId: json['sender_id'] as String,
-      receiverId: json['receiver_id'] as String,
+      conversationId: json['conversation_id'] as String,
       content: json['content'] as String,
       isRead: json['is_read'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
@@ -43,7 +43,7 @@ class Message extends BaseModel {
   @override
   String get id => _id;
   String get senderId => _senderId;
-  String get receiverId => _receiverId;
+  String get conversationId => _conversationId;
   String get content => _content;
   bool get isRead => _isRead;
   DateTime get createdAt => _createdAt;
@@ -55,7 +55,7 @@ class Message extends BaseModel {
     return {
       'id': _id,
       'sender_id': _senderId,
-      'receiver_id': _receiverId,
+      'conversation_id': _conversationId,
       'content': _content,
       'is_read': _isRead,
       'created_at': _createdAt.toIso8601String(),
@@ -71,7 +71,7 @@ class Message extends BaseModel {
     return Message(
       id: _id,
       senderId: _senderId,
-      receiverId: _receiverId,
+      conversationId: _conversationId,
       content: content ?? _content,
       isRead: isRead ?? _isRead,
       createdAt: _createdAt,

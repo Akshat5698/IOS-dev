@@ -43,7 +43,7 @@ class MockMessageRepository extends BaseRepository<Message> {
     final newMsg = Message(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       senderId: data['sender_id'],
-      receiverId: data['receiver_id'],
+      conversationId: data['conversation_id'],
       content: data['content'],
       createdAt: DateTime.now(),
     );
@@ -89,20 +89,28 @@ class ChatService extends BaseService<Message> {
   Future<List<Message>> fetchConversation(String currentUserId, String otherUserId) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final allMessages = MockDatabase.instance.messages;
-    return allMessages.where((m) {
-      return (m.senderId == currentUserId && m.receiverId == otherUserId) ||
-             (m.senderId == otherUserId && m.receiverId == currentUserId);
-    }).toList();
+    final conv = MockDatabase.instance.conversations.cast<Conversation?>().firstWhere(
+      (c) => c != null && c.participantIds.contains(currentUserId) && c.participantIds.contains(otherUserId),
+      orElse: () => null,
+    );
+    if (conv == null) return [];
+    return allMessages.where((m) => m.conversationId == conv.id).toList();
   }
 
   Future<Message> sendMessage({
     required String senderId,
     required String receiverId,
     required String content,
-  }) {
+  }) async {
+    final conv = MockDatabase.instance.conversations.cast<Conversation?>().firstWhere(
+      (c) => c != null && c.participantIds.contains(senderId) && c.participantIds.contains(receiverId),
+      orElse: () => null,
+    );
+    final convId = conv?.id ?? 'conv_1';
+    
     return create({
       'sender_id': senderId,
-      'receiver_id': receiverId,
+      'conversation_id': convId,
       'content': content,
     });
   }

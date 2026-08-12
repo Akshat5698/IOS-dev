@@ -5,7 +5,6 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/screens/welcome_screen.dart';
 import 'features/feed/screens/feed_screen.dart';
-import 'features/chat/screens/chat_list_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
 
 /// Root application widget.

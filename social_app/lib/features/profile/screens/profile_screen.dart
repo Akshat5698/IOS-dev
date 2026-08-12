@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/mock/mock_database.dart';
-import '../../feed/controllers/feed_controller.dart';
+import '../../../core/providers/supabase_providers.dart';
 import '../../../models/post.dart';
 import '../../../models/user.dart';
 
@@ -25,7 +25,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _loadUserPosts() async {
-    final posts = await ref.read(feedServiceProvider).fetchPostsByUser(user.id);
+    final posts = await ref.read(supabaseFeedServiceProvider).fetchPostsByUser(user.id);
     if (mounted) {
       setState(() {
         _userPosts = posts;

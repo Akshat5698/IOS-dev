@@ -72,7 +72,7 @@ class MockDatabase {
       lastMessage: Message(
         id: 'msg_1',
         senderId: 'user_2',
-        receiverId: 'user_1',
+        conversationId: 'conv_1',
         content: 'Hey, did you see my new post?',
         createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
       ),
@@ -85,7 +85,7 @@ class MockDatabase {
       lastMessage: Message(
         id: 'msg_2',
         senderId: 'user_1',
-        receiverId: 'user_3',
+        conversationId: 'conv_2',
         content: 'Let\'s grab coffee later.',
         createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       ),
@@ -94,10 +94,10 @@ class MockDatabase {
 
   late final List<Message> messages = [
     // conv_1
-    Message(id: 'msg_0', senderId: 'user_1', receiverId: 'user_2', content: 'Hey Alice!', createdAt: DateTime.now().subtract(const Duration(minutes: 10))),
-    Message(id: 'msg_1', senderId: 'user_2', receiverId: 'user_1', content: 'Hey, did you see my new post?', createdAt: DateTime.now().subtract(const Duration(minutes: 5))),
+    Message(id: 'msg_0', senderId: 'user_1', conversationId: 'conv_1', content: 'Hey Alice!', createdAt: DateTime.now().subtract(const Duration(minutes: 10))),
+    Message(id: 'msg_1', senderId: 'user_2', conversationId: 'conv_1', content: 'Hey, did you see my new post?', createdAt: DateTime.now().subtract(const Duration(minutes: 5))),
     // conv_2
-    Message(id: 'msg_2', senderId: 'user_1', receiverId: 'user_3', content: 'Let\'s grab coffee later.', createdAt: DateTime.now().subtract(const Duration(hours: 2))),
+    Message(id: 'msg_2', senderId: 'user_1', conversationId: 'conv_2', content: 'Let\'s grab coffee later.', createdAt: DateTime.now().subtract(const Duration(hours: 2))),
   ];
   
   // Helper to fetch a user by ID

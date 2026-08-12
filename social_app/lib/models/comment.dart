@@ -1,4 +1,5 @@
 import '../core/base/base_model.dart';
+import 'user.dart';
 
 /// Immutable comment model.
 class Comment extends BaseModel {
@@ -7,6 +8,7 @@ class Comment extends BaseModel {
   final String _userId;
   final String _text;
   final DateTime _createdAt;
+  final User? _user;
 
   // ── Named constructor ───────────────────────────────────────────────────
 
@@ -16,11 +18,13 @@ class Comment extends BaseModel {
     required String userId,
     required String text,
     required DateTime createdAt,
+    User? user,
   })  : _id = id,
         _postId = postId,
         _userId = userId,
         _text = text,
-        _createdAt = createdAt;
+        _createdAt = createdAt,
+        _user = user;
 
   // ── Factory from JSON ───────────────────────────────────────────────────
 
@@ -31,6 +35,7 @@ class Comment extends BaseModel {
       userId: json['user_id'] as String,
       text: json['text'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
+      user: json['profiles'] != null ? User.fromJson(json['profiles']) : null,
     );
   }
 
@@ -42,6 +47,7 @@ class Comment extends BaseModel {
   String get userId => _userId;
   String get text => _text;
   DateTime get createdAt => _createdAt;
+  User? get user => _user;
 
   // ── Serialisation ───────────────────────────────────────────────────────
 
@@ -60,6 +66,7 @@ class Comment extends BaseModel {
 
   Comment copyWith({
     String? text,
+    User? user,
   }) {
     return Comment(
       id: _id,
@@ -67,6 +74,7 @@ class Comment extends BaseModel {
       userId: _userId,
       text: text ?? _text,
       createdAt: _createdAt,
+      user: user ?? _user,
     );
   }
 }

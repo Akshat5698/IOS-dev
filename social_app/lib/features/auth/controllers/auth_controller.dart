@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../services/auth_service.dart';
+import '../../../core/providers/supabase_providers.dart';
 import '../../../models/user.dart';
+import '../../../services/supabase_auth_service.dart';
 
 // ── State ─────────────────────────────────────────────────────────────────
 
@@ -38,44 +39,62 @@ class AuthState {
 
 /// Riverpod [StateNotifier] managing authentication state.
 class AuthController extends StateNotifier<AuthState> {
-  final AuthService _authService;
+  final SupabaseAuthService _authService;
 
-  AuthController({AuthService? authService})
-      : _authService = authService ?? AuthService(),
+  AuthController({required SupabaseAuthService authService})
+      : _authService = authService,
         super(const AuthState()) {
     _init();
   }
 
   Future<void> _init() async {
     state = state.copyWith(isLoading: true);
+    
+    // Listen to Supabase auth state changes for automatic routing
+    _authService.authStateChanges.listen((event) async {
+      final session = event.session;
+      if (session == null) {
+        if (mounted) {
+          state = state.copyWith(isAuthenticated: false, user: null, isLoading: false);
+        }
+      } else {
+        final user = await _authService.getCurrentUser();
+        if (mounted) {
+          state = state.copyWith(isAuthenticated: true, user: user, isLoading: false);
+        }
+      }
+    });
+
     final user = await _authService.getCurrentUser();
-    state = state.copyWith(
-      isLoading: false,
-      isAuthenticated: user != null,
-      user: user,
-    );
+    if (mounted) {
+      state = state.copyWith(
+        isLoading: false,
+        isAuthenticated: user != null,
+        user: user,
+      );
+    }
   }
 
-  /// Sign up with email, password, and username.
+  /// Sign up with email and password
   Future<void> signUp({
     required String email,
     required String password,
-    required String username,
+    String? username, // username will be parsed in the postgres trigger
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final user = await _authService.signUp(
-        email: email,
-        password: password,
-        username: username,
-      );
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        user: user,
-      );
+      final user = await _authService.signup(email, password);
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: true,
+          user: user,
+        );
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
     }
   }
 
@@ -86,14 +105,18 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final user = await _authService.login(email: email, password: password);
-      state = state.copyWith(
-        isLoading: false,
-        isAuthenticated: true,
-        user: user,
-      );
+      final user = await _authService.login(email, password);
+      if (mounted) {
+        state = state.copyWith(
+          isLoading: false,
+          isAuthenticated: true,
+          user: user,
+        );
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
     }
   }
 
@@ -102,9 +125,13 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       await _authService.logout();
-      state = const AuthState();
+      if (mounted) {
+        state = const AuthState();
+      }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      if (mounted) {
+        state = state.copyWith(isLoading: false, errorMessage: e.toString());
+      }
     }
   }
 
@@ -116,11 +143,8 @@ class AuthController extends StateNotifier<AuthState> {
 
 // ── Providers ─────────────────────────────────────────────────────────────
 
-/// Singleton [AuthService] provider.
-final authServiceProvider = Provider<AuthService>((ref) => AuthService());
-
 /// Auth state provider.
 final authControllerProvider =
     StateNotifierProvider<AuthController, AuthState>((ref) {
-  return AuthController(authService: ref.watch(authServiceProvider));
+  return AuthController(authService: ref.watch(supabaseAuthServiceProvider));
 });

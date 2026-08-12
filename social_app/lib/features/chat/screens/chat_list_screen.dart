@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/mock/mock_database.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../../widgets/loading_indicator.dart';
+import '../../../widgets/error_view.dart';
+import '../controllers/chat_controller.dart';
 import 'chat_screen.dart';
 
 /// Screen showing a list of recent conversations.
@@ -11,11 +14,12 @@ class ChatListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final conversations = MockDatabase.instance.conversations;
+    final currentUser = ref.watch(authControllerProvider).user;
+    final chatListAsync = ref.watch(chatListProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(MockDatabase.instance.currentUser.username, style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(currentUser?.username ?? 'Messages', style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_square),
@@ -23,8 +27,15 @@ class ChatListScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: conversations.isEmpty
-          ? Center(
+      body: chatListAsync.when(
+        loading: () => const LoadingIndicator(),
+        error: (err, stack) => ErrorView(
+          message: err.toString(),
+          onRetry: () => ref.refresh(chatListProvider),
+        ),
+        data: (conversations) {
+          if (conversations.isEmpty) {
+            return Center(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -33,34 +44,45 @@ class ChatListScreen extends ConsumerWidget {
                   Text('No conversations yet', style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.5))),
                 ],
               ),
-            )
-          : ListView.builder(
-              itemCount: conversations.length,
-              itemBuilder: (context, index) {
-                final conv = conversations[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                    radius: 24,
-                    backgroundImage: NetworkImage(conv.otherUser.avatarUrl ?? 'https://placehold.co/100x100.png'),
-                  ),
-                  title: Text(conv.otherUser.username, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(
-                    conv.lastMessage?.content ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
-                  ),
-                  trailing: const Icon(Icons.camera_alt_outlined, color: Colors.grey),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ChatScreen(conversation: conv),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: conversations.length,
+            itemBuilder: (context, index) {
+              final conv = conversations[index];
+              final otherUser = conv.otherUser;
+              if (otherUser == null || currentUser == null) return const SizedBox.shrink();
+
+              return ListTile(
+                leading: CircleAvatar(
+                  radius: 24,
+                  backgroundImage: NetworkImage(otherUser.avatarUrl ?? 'https://placehold.co/100x100.png'),
+                ),
+                title: Text(otherUser.username, style: const TextStyle(fontWeight: FontWeight.w600)),
+                subtitle: Text(
+                  conv.lastMessage?.content ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                ),
+                trailing: const Icon(Icons.camera_alt_outlined, color: Colors.grey),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(
+                        currentUserId: currentUser.id,
+                        otherUserId: otherUser.id,
+                        otherUsername: otherUser.username,
                       ),
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
+                  );
+                },
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
